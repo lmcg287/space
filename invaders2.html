@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<style>
+		* {
+			margin: 0;
+			padding: 0;
+		}
+		canvas {
+			width: 100%;
+			margin: 0;
+			padding: auto;
+
+		}
+		</style>
+		<title>Document</title>
+		<div><canvas id = 'canvas' width = '1200px' height = '900px'></canvas></div>
+
+	</head>
+	<body>		
+		<script>
+			var canvas = document.getElementById('canvas');
+			var ctx = canvas.getContext('2d');
+
+			var enemyArr = [[], [], [], [], [], [], []];
+			var bulletsArr = [];
+
+			var xDist; 
+			var yDist;
+			var done = false;
+
+			var soundTrack = new Audio();
+			soundTrack.src = 'spaceinvaders1.mpeg';
+			soundTrack.autoplay = true
+			var soundTrack2 = new Audio();
+			soundTrack2.src = 'spaceinvaders2.ogg'
+
+			var effects = [
+			
+				{ file: './effects/explosion.ogg' }, //0
+				{ file: './effects/fastinvader1.ogg' }, //1
+				{ file: './effects/fastinvader2.ogg' }, //2
+				{ file: './effects/fastinvader3.ogg' }, //3
+				{ file: './effects/fastinvader4.ogg' }, //4
+				{ file: './effects/invaderkilled.ogg'}, //5
+				{ file: './effects/shoot.ogg' }, //6 
+				{ file: './effects/ufo_highpitch.ogg' }, //7
+				{ file: './effects/ufo_lowpitch.ogg' } //8
+
+				];
+
+				(function loadEffects() {
+
+				for (var i = 0; i < effects.length; i++) {
+					effects[i].effectsVar = new Audio(); 
+					effects[i].effectsVar.src = effects[i].file;
+				}
+				
+			})();
+
+			var images = [
+
+				{ name: 'inv1', file: 'inv1.2pixels' }, //0
+				{ name: 'inv2', file: 'inv2.2pixels' }, //1
+				{ name: 'inv3', file: 'inv3.2pixels' }, //2
+				{ name: 'inv4', file: 'inv4.2pixels' }, //3
+				{ name: 'explosion', file: 'explosion.2pixels' }, //4
+				{ name: 'projectile', file: 'projectile.2pixels' }, //5
+				{ name: 'title', file: 'title.2pixels' }, //6
+				{ name: 'external', file: 'external.2pixels' }, //7
+				{ name: 'shooter', file: 'shooter.2pixels' }, //8
+				{ name: 'spaceship', file: 'spaceship.2pixels' }, //9
+				{ name: 'dead', file: 'dead.2pixels' } //10
+
+				];
+
+			(function loadImages() {
+
+				for (var i = 0; i < images.length; i++) {
+					images[i].imgVar = new Image(); 
+					images[i].imgVar.src = images[i].file;
+				}
+
+			})();
+			
+			document.addEventListener('keydown', event);
+
+		window.onload = function() { 
+
+							screenTitle();
+							ship.reset(images);
+							bullet.reset(images);
+							invader.reset(images);
+							soundTrack.play();
+						}
+
+		function screenTitle() {
+
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.drawImage(images[6].imgVar, canvas.width / 2 - (images[6].imgVar.width / 2), canvas.height / 2 - images[6].imgVar.height / 2 - 150);
+			ctx.font = '40px Courier New';
+			ctx.fillStyle = 'white';
+			var text = 'Press Enter to Start';
+			var measure = ctx.measureText(text).width;
+			ctx.fillText(text, canvas.width / 2 - measure / 2, canvas.height - 300);		
+		}
+		setInterval(function() {images[0].imgVar.src = 'inv1.2pixels' }, 800);
+				setInterval(function() {images[0].imgVar.src = 'inv2.2pixels' }, 400);
+				
+		function event(ev){
+
+			switch(ev.key) {
+
+				case 'Enter' : setInterval(function() { game();}, 1);
+					break;
+				case 'ArrowRight' : if (ship.x < 940) { ship.move(1); }
+					break;
+				case 'ArrowLeft': if (ship.x > 200) { ship.move(-1); }
+					break;
+				case ' ' :  bulletsArr.push(new Bullet(ship.x, ship.y));
+					break;
+			}
+		}
+
+		var ship = new Ship();
+		var invader = new Invader();
+		var bullet = new Bullet();
+
+		function Ship() {
+
+			this.x = canvas.width / 2;
+			this.y = canvas.height - 220;
+
+			this.move = function(vel) {
+
+				this.x += vel * 20;	
+			}
+			this.reset = function(img) {
+
+				this.pic = img[8].imgVar;
+			}
+			this.show = function() {
+				
+				ctx.fillStyle = 'black';
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+				ctx.drawImage(this.pic, this.x, this.y);
+			}
+		}
+		for (var i = 0; i < 7; i++) {
+
+		 	for (var j = 0; j < 9; j++) {
+
+		 		enemyArr[i][j] = new Invader(240 + (j * 70), (480 - (i * 50)));
+		 	}
+		 }
+		
+		function Invader(x, y) {
+
+			this.x = x;
+			this.y = y;
+			this.speed = .2;
+			this.speedY = 0;
+
+			this.move = function(i, j) {
+
+				if (enemyArr[i][j] != ' ') {
+
+					if (enemyArr[i][j].x > 400 + (j * 70) && this.speedY == 0) {
+
+						this.speed = 0;
+						this.speedY = 10;
+					}
+					 else if (enemyArr[i][j].x > 400 + (j * 70) && this.speedY != 0) {
+
+						this.speedY = 0;
+						this.speed = -.2;
+					}
+					else if (enemyArr[i][j].x < 200 + (j * 70) && this.speedY == 0) {
+
+						this.speedY = 10;
+						this.speed = 0;
+					}
+					else if (enemyArr[i][j].x < 200 + (j * 70) && this.speedY != 0) {
+
+						this.speedY = 0;
+						this.speed = .2;
+					}	
+							
+					enemyArr[i][j].x += this.speed;
+					enemyArr[i][j].y += this.speedY;
+				}
+			
+			}
+			//this.dead = false;
+
+
+			
+			this.reset = function(img) {
+
+				this.pic = img[0].imgVar;
+				
+			}
+			this.show = function() {
+		
+				for (var i = 0; i < enemyArr.length; i++) {
+					
+					for (var j = 0; j < enemyArr[i].length; j++) {
+
+						for (var n = 0; n < bulletsArr.length; n++) {
+
+						 		xDist = (enemyArr[i][j].x + 22) - bulletsArr[n].x;
+						 		yDist =  bulletsArr[n].y - (enemyArr[i][j].y) + 16;
+
+						 		if (done == false) {
+
+							 		if (xDist <= 22 && xDist >= -22 && yDist <= 0  && done == false) {
+										if (done == false) {
+											done = true;
+											var temp1 = i;
+											var temp = j;
+											var temp3 = n;
+											//enemyArr[temp1][temp].dead = true;
+											bulletsArr.splice(temp3, 1);
+											
+											setTimeout(enemyArr[temp1].splice(temp, 1, ' '), 200);
+											done = false;	
+										}	
+									}
+								}
+						}
+						if (enemyArr[i][j] != ' ') {
+
+							//if (this.dead) {
+
+								//enemyArr[i][j].pic = img[10].imgVar; 
+							//}
+
+							enemyArr[i][j].move(i, j);			
+							ctx.drawImage(this.pic, enemyArr[i][j].x, enemyArr[i][j].y);
+						}
+					}	
+				}
+			}
+			this.collision = function() {
+		
+				if (bulletsArr != undefined) {
+				
+					for (var i = 0; i < enemyArr.length; i++) {
+
+						for (var j = 0; j < enemyArr[i].length; j++) {
+
+							for (var n = 0; n < bulletsArr.length; n++) {
+
+							}
+						}
+					}
+				}
+			}
+		}
+
+		function Bullet(x ,y) {
+
+			this.x = x;
+			this.y = y;
+			this.bulletSpeed = 3;
+
+			this.move = function() {
+				
+				this.y -= this.bulletSpeed;
+
+			}
+			this.reset = function(img) {
+
+				this.pic = img[5].imgVar;
+			}
+			this.show = function() {
+
+				for (var i = 0; i < bulletsArr.length; i++) {
+
+					if (bulletsArr[i].y > -10) {
+						bulletsArr[i].move();
+						ctx.drawImage(this.pic, bulletsArr[i].x + 16, bulletsArr[i].y);
+					}
+				}
+			}
+		}
+
+		function game() {
+			
+			ship.show();
+			invader.show();
+			bullet.show();
+			draw();
+			music()
+		}
+
+		function draw() {
+		
+			ctx.drawImage(images[7].imgVar, 0, 0)
+		}
+		function music() {
+
+			if (soundTrack.ended) {
+
+				soundTrack2.play();
+				soundTrack.ended = false;
+			}
+			if (soundTrack2.ended) {
+
+				soundTrack.play();
+				soundTrack2.ended = false;
+			}
+		}
+ 
+		</script>
+	
+	</body>
+</html>

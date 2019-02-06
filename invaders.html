@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<style>
+	* {
+		margin: 0;
+		padding: 0;
+	}
+	canvas {
+		width: 100%;
+		margin: 0;
+		padding: auto;
+
+	}
+	</style>
+	<title>Document</title>
+	<div><canvas id = 'canvas' width = '1200px' height = '900px'></canvas></div>
+
+</head>
+<body>		
+	<script>
+		var canvas = document.getElementById('canvas');
+		var ctx = canvas.getContext('2d');
+
+		var enemyArr = [];
+		var bulletsArr = [];
+
+		var soundTrack = new Audio();
+		soundTrack.src = 'spaceinvaders1.mpeg';
+
+		var effects = [
+		
+			{ file: './effects/explosion.wav' }, //0
+			{ file: './effects/fastinvader1.wav' },//1
+			{ file: './effects/fastinvader2.wav' }, //2
+			{ file: './effects/fastinvader3.wav' }, //3
+			{ file: './effects/fastinvader4.wav' }, //4
+			{ file: './effects/invaderkilled.wav'}, //5
+			{ file: './effects/shoot.wav' }, //6
+			{ file: './effects/spaceinvaders2.ram' }, //7
+			{ file: './effects/ufo_highpitch.wav' }, //8
+			{ file: './effects/ufo_lowpitch.wav' } //9
+
+			];
+
+			(function loadEffects() {
+
+			for (var i = 0; i < effects.length; i++) {
+				effects[i].effectsVar = new Audio(); 
+				effects[i].effectsVar.src = effects[i].file;
+			}
+			
+		})();
+
+		var images = [
+
+			{ name: 'inv1', file: 'inv1.2pixels' }, //0
+			{ name: 'inv2', file: 'inv2.2pixels' }, //1
+			{ name: 'inv3', file: 'inv3.2pixels' }, //2
+			{ name: 'inv4', file: 'inv4.2pixels' }, //3
+			{ name: 'explosion', file: 'explosion.2pixels' }, //4
+			{ name: 'projectile', file: 'projectile.2pixels' }, //5
+			{ name: 'title', file: 'title.2pixels' }, //6
+			{ name: 'external', file: 'external.2pixels' }, //7
+			{ name: 'shooter', file: 'shooter.2pixels' }, //8
+			{ name: 'spaceship', file: 'spaceship.2pixels' }, //9
+			{ name: 'dead', file: 'dead.2pixels' } //10
+
+			];
+
+		(function loadImages() {
+
+			for (var i = 0; i < images.length; i++) {
+				images[i].imgVar = new Image(); 
+				images[i].imgVar.src = images[i].file;
+			}
+
+		})();
+		
+		document.addEventListener('keydown', event);
+
+
+	window.onload = function() { screenTitle();ship.reset(images);bullet.reset(images);invader.reset(images);soundTrack.play();}
+
+	function screenTitle() {
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		ctx.drawImage(images[6].imgVar, canvas.width / 2 - (images[6].imgVar.width / 2), canvas.height / 2 - images[6].imgVar.height / 2 - 150);
+		ctx.font = '40px Courier New';
+		ctx.fillStyle = 'white';
+		var text = 'Press Enter to Start';
+		var measure = ctx.measureText(text).width;
+		ctx.fillText(text, canvas.width / 2 - measure / 2, canvas.height - 300);
+		
+	}
+
+	function event(ev){
+
+		switch(ev.key) {
+
+			case 'Enter' :   setInterval(function() { game();}, 1);
+				break;
+			case 'ArrowRight' : if (ship.x < 940) { ship.move(1); }
+				break;
+			case 'ArrowLeft': if (ship.x > 200) { ship.move(-1); }
+				break;
+			case ' ' :  bulletsArr.push(new Bullet(ship.x, ship.y)); invader.show()
+				break;
+		}
+	}
+	var ship = new Ship();
+	var invader = new Invader();
+	var bullet = new Bullet();
+
+	function Ship() {
+
+		//this.pic = images[8].imgVar;
+		this.x = canvas.width / 2;
+		this.y = canvas.height - 220;
+
+		this.move = function(vel) {
+
+			this.x += vel * 20;	
+		}
+		this.reset = function(img) {
+
+			this.pic = img[8].imgVar;
+		}
+		this.show = function() {
+			
+			ctx.fillStyle = 'black';
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			ctx.drawImage(this.pic, this.x, this.y);
+		}
+	}
+	for (var i = 0; i < 7; i++) {
+
+		enemyArr[i] = new Invader(50 + (i * 90));
+	}
+	function Invader(x) {
+
+		this.x = x;
+		this.y = 500;
+
+		this.move = function() {
+
+		}
+		this.reset = function(img) {
+
+			this.pic = img[0].imgVar;
+		}
+		this.show = function() {
+			console.log('susmuerto')
+			//ctx.drawImage(this.pic[0].imgVar, canvas.width / 2 , canvas.height / 2)
+			console.log(enemyArr)
+			for (var i = 0; i < enemyArr.length; i++) {
+				
+
+				ctx.drawImage(this.pic, enemyArr[i].x, this.y);
+
+			}
+
+		}
+	}
+
+	
+	// for (var i = 0; i < enemyArr; i ++) {
+
+	// }
+
+	function Bullet(x ,y) {
+
+		this.x = x;
+		this.y = y;
+		this.bulletSpeed = 3;
+
+		this.move = function() {
+			
+				this.y -= this.bulletSpeed;
+
+		}
+		this.reset = function(img) {
+
+			this.pic = img[5].imgVar;
+		}
+		this.show = function() {
+
+			for (var i = 0; i < bulletsArr.length; i++) {
+				if (bulletsArr[i].y > -10) {
+					bulletsArr[i].move();
+					ctx.drawImage(this.pic, bulletsArr[i].x + 16, bulletsArr[i].y);
+				}
+			}
+		}
+	}
+
+	function game() {
+		
+		ship.show();
+		bullet.show();
+		invader.show();
+		draw();
+	}
+	function draw() {
+	
+		//ctx.drawImage(images[7].imgVar, 0, 0)
+	}
+ 
+	</script>
+	
+</body>
+</html>
